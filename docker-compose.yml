@@ -1,18 +1,22 @@
-version: "3.9"
-services:
-  web:
-    build: ./web
-    command: flask run --host=0.0.0.0
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./web:/app
-      - ./geotif:/app/app/scripts/geotif/
-      - ./predict_ML:/app/app/scripts/predict/
+version: '3'
 
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
+services:
+  flask_app:
+    container_name: flask_app
+    restart: always
+    build: ./flask_app
+    ports:
+      - "8000:8000"
+    command: gunicorn -w 1 -b 0.0.0.0:8000 wsgi:server
+    volumes:
+      - ./flask_app:/flask_app
+      - ./database:/database
+  
+  nginx:
+    container_name: nginx
+    restart: always
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - flask_app

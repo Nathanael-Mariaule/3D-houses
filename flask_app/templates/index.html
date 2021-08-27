@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+    <style>
+        *
+        {
+            box-sizing: border-box;
+            background-color: black;
+            color: white;
+        }
+        /* Set additional styling options for the columns*/
+        .column {
+        float: left;
+        width: 50%;
+        }
+    
+        .row:after {
+        content: "";
+        display: table;
+        clear: both;
+        }
+    </style>
+    <head>
+        <title>{{ title }}</title>
+    </head>
+     <body>
+        <h1>{{ title }}</h1>
+        <script src="./static/js/three.js"></script>
+        <script src="./static/js/OrbitControls.js"></script>
+        <script src="./static/js/PLYLoader.js"></script>
+        <script src="./static/js/GLTFLoader.js"></script>
+
+
+
+        <div class="row">
+            <div class="column">
+                <h2 class="card-title">
+                    Adress of the house:
+                  </h2>
+                
+                <form action="" method="post" novalidate>
+                    {{ form.hidden_tag() }}
+                    <p>
+                        {{ form.number.label }}: {{ form.number(size=1) }}
+                        {{ form.street_name.label }}: {{ form.street_name(size=32) }}
+                    </p>
+                    <p>
+                        {{ form.postal_code.label }}: {{ form.postal_code(size=1) }}
+                        {{ form.city.label }}: {{ form.city(size=5) }} 
+                        {{ form.province.label }}: {{ form.province }} 
+                    </p>
+                    If known, please fill the following informations for increased precision of the estimation:
+                    <p>
+                        {{form.type_house.label}}: {{form.type_house}}
+                        {{form.state.label}} : {{form.state}}
+                    </p>
+                    <p>
+                        {{form.area.label}}: {{form.area(size=2)}} (meter-square)
+                    </p>
+                    <p>
+                        {{form.area_of_land.label}} : {{form.area_of_land(size=2)}} (meter-square)
+                    </p>
+                    <p>
+                        {{form.number_room.label}}: {{form.number_room(size=1)}}
+                        {{form.number_facade.label}}: {{form.number_facade(size=1)}}
+                    </p>
+                    <p>
+                        {{form.garden}}{{form.garden.label}}, {{form.garden_area.label}}:{{form.garden_area(size=1)}} (meter-square)
+                    </p>
+                    <p>
+                        {{form.terrace}}{{form.terrace.label}}; {{form.terrace_area.label}}:{{form.terrace_area(size=1)}} (meter-square)
+                    </p>
+                    <p>
+                        {{ form.equipped}} {{ form.equipped.label }} {{ form.furnished}} {{ form.furnished.label }} {{ form.fire}} {{ form.fire.label }} {{ form.pool}} {{ form.pool.label }}
+                    </p>
+                    <p>
+                        {{ form.submit() }}
+                    </p>
+                </form>
+            </div>
+            <div class="column">
+                <h2 class="card-title">
+                    Estimated Price:
+                      <span id="prediction-text">{{ price }}</span>
+                  </h2>
+                <h2 class="card-title align-middle">
+                </h2>
+                
+                <div class="text-center">
+                    {% if plot=='done' %}
+                    <canvas id="myCanvas" width="10" height="2"></canvas>
+                    {% elif plot=='not available' %}
+                    <div id="loading" class="d-none">
+                        <img src="./static/loading.gif" alt="">
+                    </div>
+                    Sorry, 3D representations are not yet available for this city.
+                    3D representations are only avalailable for the city of Oostkamp
+                    {% else %}
+                    <div id="loading" class="d-none">
+                        <img src="./static/loading.gif" alt="">
+                      </div>
+                     3D representations are only avalailable for the city of Oostkamp.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <script>
+            localStorage.setItem('nmesh', '{{nmesh}}');
+        </script>
+        <script src="./static/js/render.js"></script>
+        <script src="./static/js/AJAX.js"></script>
+
+    </body>
+</html>
+        
+    
+    
+    

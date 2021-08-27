@@ -1,218 +1,109 @@
-<!-- PROJECT LOGO -->
-<br />
+# Belgian Houses 3D visualization and Price prediction
+
+This application allows to vizualise and predict the price of any building in Belgium.
+The price prediction is based on a [XGBoost model](https://github.com/Nathanael-Mariaule/Belgium-immo-price-prediction). The [web app](http://nathanael-mrl.be) was build using Flask.
+
+Currently the 3D visualization is limited to the city of Oostkamp due to server limitations and
+non-optimized database construction.
+
+To use the app type the followings commands:
+
+1. docker-compose build  #build docker environment
+2. docker-compose run flask\_app python  database_initializer.py   #build database
+3. docker-compose up #launch app
+
+Remark: if one want to increase the database for cities other than Oostkamp, one need to edit the file database/cities as described in database/database_creator.py
+
+
+#### This project was designed as part of the [Becode](https://becode.org/) AI's formation.
+
+
+## App Structure:
+The application is divided into 3 tasks:
+- **Database builder**: LIDAR datas and belgian houses adresses and cadastral plan are collected from public databases. These datas are then split, cut and transformed to speed up further use in the app. This part is contained in the _database_ folder.
+- **3D modeling**: The algorithm receives tiff-files with LIDAR datas from a cadastral area and build using [Open3D](http://www.open3d.org/)  a modelization of the data. It stores the 3D models as PLY file to be displayed by the web app. This part is contained in the _flask\_app/python\_scripts_
+- **Web app**: The user interact with the [web application](http://nathanael-mrl.be). He enter as input the adress of a house and its caracteristics. The app retrieves then the 3D model and price prediction and display it in a [Three.js](https://threejs.org/) canvas.  See _flask\_app_ folder
 <p align="center">
-  <a href="https://github.com/KeThien/3D-houses">
-    <img src="3dhouse.gif" alt="Logo" height="80">
-  </a>
-
-  <h2 align="center">Project 3D Houses</h2>
-
-  <p align="center">
-    Machine Learning project: Real estate prediction with 3d Houses render from Lidar Data
-    <br />
-  <a href="http://nathanael-mrl.be/">View Demo</a> from <a href="https://github.com/Nathanael-Mariaule">Nathanaël Mariaule</a>
-  </p>
+    <img src="https://github.com/Nathanael-Mariaule/Belgium_3D_immo/blob/main/Doc/program_structure.svg">
 </p>
 
+## Data collection and pre-processing
+This application use 3 datasets:
+- **Adresse location catalogus** : This [public dataset](https://download.vlaanderen.be/Producten/Detail?id=447&title=CRAB_Adressenlijst#) contains the adress and geographic coordinates of each property in Vlanderen. This dataset is used to get the precise geographic coordinate and not rely less precise geographic API.
 
+- **Cadastre Plan**: We use the dataset of the [belgian fiscal service](https://eservices.minfin.fgov.be/myminfin-web/pages/cadastral-plans) to get the belgian cadastral plans. This contains the geographic coordinates of every cadastral area and every building in Belgium.
 
-<!-- TABLE OF CONTENTS -->
-<details open="open">
-  <summary><h2 style="display: inline-block">Table of Contents</h2></summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#briefing">Briefing</a></li>
-    <li><a href="#license">License</a></li>
+- **LIDAR datas**: The LIDAR datas were collected by the belgian service public [1](https://download.vlaanderen.be/Producten/Detail?id=939&title=Digitaal_Hoogtemodel_Vlaanderen_II_DTM_raster_1_m), [2](https://download.vlaanderen.be/Producten/Detail?id=939&title=Digitaal_Hoogtemodel_Vlaanderen_II_DSM_raster_1_m) It consists of LIDAR data collected using drone i.e. spatial coordinates of the belgian territory. The DTM contains informations at the level of the ground while the DSM contains building, trees,... informations.
 
-  </ol>
-</details>
+### Problem: each DSM/DTM has size 1Go+
+It is difficult to store all these datas. Also, this make 3D rendering very slow as we have to manipulate these big file to extract the 3D meshes.
 
+**Solution**: We split the file into small pieces
 
+Using the cadastral plans, we cut the area corresponding to an adress in the DSM and DTM file and store them in a compressed folder. This allows faster loading of the LIDAR data and reduced storage space.
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
-
-![Screen Shot](screenshot.png)
-![Animated Gif of 3D object](3dhouse.gif)
-
-The project was about us learning Machine Learning implementation in Flask , extraction of Lidar DATA , Usage of the data and 3D rendering.
-We focus only on a small part of the geolocation from the geotiff files because it was to big to handle in memory. But the project is scalable with the help of [Cloud Optimized GeoTIFF (COG)](https://www.cogeo.org/) 
-
-### Built With
-
-* [Docker](https://www.docker.com/)
-* [Flask](https://flask.palletsprojects.com/)
-* [Open3d](http://www.open3d.org/)
-* [XGBoost](https://xgboost.readthedocs.io/en/latest/python/python_api.html)
-* [Python](https://www.python.org/)
-
-
-
-<!-- GETTING STARTED -->
-## Getting Started
-
-To get a local copy up and running follow these simple steps.
-
-### Prerequisites
-
-* data DSM DTM for the demo: [here](https://drive.google.com/file/d/1VslI3iD2n43o61dx5poL7zP4RIym7GDV/view?usp=sharing)
-* [Docker](https://www.docker.com/)
-* [Docker Compose](https://docs.docker.com/compose/install/)
-
-### Installation
-
-1. Clone the repo
-   ```sh
-   git clone git@github.com:KeThien/3D-houses.git
-   ```
-2. Extract the data in the project `3D-houses` folder
-
-
-
-<!-- USAGE EXAMPLES -->
-## Usage
-All the packages python requirements are in requirements.txt
-and is automatically installed with the docker-compose.yml file.
-
-Launch docker compose
-   ```sh
-   docker-compose up
-   ```
-`docker-compose.yml`
-  ```yml
-  version: "3.9"
-services:
-  web:
-    build: ./web
-    command: flask run --host=0.0.0.0
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./web:/app
-      - ./geotif:/app/app/scripts/geotif/
-      - ./predict_ML:/app/app/scripts/predict/
-
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-  ```
-It will start the web service and the predict service from Flask
+When a user enter an adresse, the API use the adresse catalogus to determine the CaPaKey of the adress (i.e. a unique ID). Then, it collect the following compressed folder:
 ```
-flask run
+ capakey_of_adress
+ |- cadastre.pickle
+ |- dsm.tiff
+ |- dtm.tiff
 ```
+The dsm.tiff and dtm.tiff contains the LIDAR data on the parcel and cadastre.pickle contains the geographic data of the buildings.
 
 
-# Briefing
-## 3D House Project
 
-- Repository: `3D-houses`
-- Type of Challenge: `Learning & Consolidation`
-- Duration: `2 weeks`
-- Deadline: `02/07/21 17:00 AM`
-- Deployment strategy :
-  - GitHub page
-  - PowerPoint
-  - Jupyter Notebook
-  - Webpage
-  - App
-- Team challenge : `Team`
+__Remark:__ We use datasets for the region of Vlanderen. The same data exits for the region of Wallonia.
 
-## Mission objectives
 
-Consolidate the knowledge in Python, specifically in :
+## 3D modelization
+The 3D representation is done using Open3D. 
+<p align="center">
+    <img src="https://github.com/Nathanael-Mariaule/Belgium_3D_immo/blob/main/Doc/3d_house.png">
+</p>
+When the user input an adress, the algorithm collect the LIDAR points in the cadastral area of the adress and compute the following 3D meshes:
 
-- NumPy
-- Pandas
-- Matplotlib
+#### 1. The ground area:
+A ball pivoting algorithm [BM99] implemented in open3d is applied on the LIDAR point from the DTM-file to generate a good resolution modeling of the land.
 
-## Learning Objectives
+#### 2. The house:
+The house is build using many meshes. First, we use the cadastral data to get the coordinates of the boundaries of the house. We compute a likely hight for the walls using the LIDAR points and create a rectangle mesh for each wall. Then we use a convex hull to generate a mesh for the roof.
 
-- to be able to search and implement new libraries
-- to be able to read and use the [shapefile](https://en.wikipedia.org/wiki/Shapefile) format
-- to be able to read and use geoTIFFs
-- to be able to render a 3D plot
-- to be able to present a final product
+<p align="center">
+    <img src="https://github.com/Nathanael-Mariaule/Belgium_3D_immo/blob/main/Doc/convex_hull.png">
+</p>
 
-## The Mission
+**Problem:**  it could happens that the convex hull is to big and contains points outside the house.
 
-> We are _LIDAR PLANES_, active in the Geospatial industry. We would like to use our data to launch a new branch in the insurance business. So, we need you to build a solution with our data to model a house in 3D with only a home address.
+So we first split the house area into smaller pieces so that in each piece the convex hull stays inside the house area.
 
-### Must-have features
+<p align="center">
+    <img src="https://github.com/Nathanael-Mariaule/Belgium_3D_immo/blob/main/Doc/convex_pieces.png">
+</p>
+ 
+### 3. Everything else: 
+We have no information about what could be these points (it is very likely that it is vegetation). So we leave the points cloud as it is. Though for clarity, we remove the points that are too close from the house.
 
-- 3D lookup of houses.
+## Web App
+The web app is developped with [Flask](https://flask.palletsprojects.com/en/2.0.x/). A Flask form is used to collect inputs from the user that are fed to the API. It uses [Three.js](https://threejs.org/) a powerfull javascript library to display the 3D objects in the browser.
 
-### Nice-to-have features
 
-- Optimize your solution to have the result as fast as possible.
-- Features like the living area of the house in m², how many floors, if there is a pool, the vegetation in the neighborhood, etc...
-- Better visualization.
 
-### Miscellaneous information
 
-#### What is LIDAR ?
+## Further Possible improvements:
+- **Database:** At the moment the database is poorly designed and can be improved in many ways. First, we can reduce the memory space by storing the LIDAR data in arrays instead of tiff-file and by using a better compression format. Second, we should use ad-hoc system to store the database.
 
-LIDAR is a method to measure distance using light. The device will illuminate a target with a laser light and a sensor will measure the reflection. Differences in wavelength and return times will be used to get 3D representations of an area.
+- **Optimization of the App:** Currently, the app does not support many simultaneous request (mostly due to the database building). Many steps in the process can be speed up (generation of the 3D-meshes using multithreading, creation of a "cache" to avoid mutiple creation of the same model,...)
 
-Here is a LIDAR segmentation :
+- **3D visualization:** Machine learning algorithm can be used to improve the rendering (e.g. to get better result for the walls). Also, it remains some bugs during the generation of the roof.
 
-![Lidar Segmentation](lidar_seg.png)
+- **Price prediction:** The model for price prediction can be improved as discussed in [the following repo](https://github.com/Nathanael-Mariaule/Belgium-immo-price-prediction).
 
-With those points clouds we can easily identify houses, vegetation, roads, etc...
 
-The results we're interested in are DSM (Digital Surface Map) and DTM (Digital Terrain Map).
 
-Which are already computed and available here :
 
-- [DSM](http://www.geopunt.be/download?container=dhm-vlaanderen-ii-dsm-raster-1m&title=Digitaal%20Hoogtemodel%20Vlaanderen%20II,%20DSM,%20raster,%201m)
-- [DTM](http://www.geopunt.be/download?container=dhm-vlaanderen-ii-dtm-raster-1m&title=Digitaal%20Hoogtemodel%20Vlaanderen%20II,%20DTM,%20raster,%201m)
+## References:
+[BM99] F. Bernardini and J. Mittleman and HRushmeier and C. Silva and G. Taubin: The ball-pivoting algorithm for surface reconstruction, IEEE transactions on visualization and computer graphics, 5(4), 349-359, 1999
 
-## Deliverables
 
-1. Publish your source code on the GitHub repository.
-2. Pimp up the README file:
-   - Description
-   - Installation
-   - Usage
-   - (Visuals)
-   - (Contributors)
-   - (Timeline)
-   - (Personal situation)
-3. Show us your results in a nice presentation.
-4. Show us a live demo.
-
-### Steps
-
-1. Create the repository
-2. Study the request (What & Why ?)
-3. Download the maps
-4. Identify technical challenges (How ?)
-
-## Evaluation criteria
-
-| Criteria       | Indicator                                                                   | Yes/No |
-| -------------- | --------------------------------------------------------------------------- | ------ |
-| 1. Is complete | There are no warnings/errors in the console.                                |        |
-|                | You push your changes to GitHub at least once a day.                        |        |
-|                | There is a visualization available for one house.                           |        |
-| 2. Is great    | One can select an address and have the building at that address visualized. |        |
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
 
