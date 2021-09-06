@@ -9,7 +9,7 @@ non-optimized database construction.
 To use the app type the followings commands:
 
 1. docker-compose build  #build docker environment
-2. docker-compose run flask\_app python  database_initializer.py   #build database
+2. docker-compose run flask\_app python database_initializer.py   #build database
 3. docker-compose up #launch app
 
 Remark: if one want to increase the database for cities other than Oostkamp, one need to edit the file database/cities as described in database/database_creator.py
@@ -81,7 +81,7 @@ So we first split the house area into smaller pieces so that in each piece the c
     <img src="https://github.com/Nathanael-Mariaule/Belgium_3D_immo/blob/main/Doc/convex_pieces.png">
 </p>
  
-### 3. Everything else: 
+#### 3. Everything else: 
 We have no information about what could be these points (it is very likely that it is vegetation). So we leave the points cloud as it is. Though for clarity, we remove the points that are too close from the house.
 
 ## Web App
